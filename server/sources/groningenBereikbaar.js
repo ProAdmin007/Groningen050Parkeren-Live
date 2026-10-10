@@ -1,6 +1,9 @@
-// Q-Park-garages en P+R-terreinen via de open GeoJSON-API achter
-// kaart.groningenbereikbaar.nl (de "Slimme Kaart" van Groningen Bereikbaar).
-// Deze bron geeft per locatie capaciteit en beschikbare plekken, maar geen update-tijd.
+// P+R-terreinen via de open GeoJSON-API achter kaart.groningenbereikbaar.nl
+// (de "Slimme Kaart" van Groningen Bereikbaar). Deze bron geeft per locatie
+// capaciteit en beschikbare plekken, maar geen update-tijd.
+//
+// De Q-Park-garages in deze bron worden bewust overgeslagen: hun waarden bleven bij
+// metingen urenlang gelijk en weken af van de echte live-feed, dus ze zijn niet live.
 import { fetchSource } from '../config.js';
 
 const URL_ = 'https://kaart.groningenbereikbaar.nl/api/maps/1.json';
@@ -29,12 +32,9 @@ export function toLocations(geojson) {
   for (const f of geojson.features) {
     const p = f?.properties ?? {};
     if (f?.geometry?.type !== 'Point' || typeof p.title !== 'string') continue;
-    const isPr = /^P\+R-terreinen/.test(p.category ?? '');
-    const isQPark = /^Auto - Parkeergelegenheden/.test(p.category ?? '') && /^GRONINGEN-/.test(p.title);
-    if (!isPr && !isQPark) continue;
+    if (!/^P\+R-terreinen/.test(p.category ?? '')) continue;
 
-    const name = isQPark ? p.title.replace(/^GRONINGEN-/, '') : p.title;
-    const id = isQPark ? `qpark-${slug(name)}` : slug(name.replace(/^P\+R/, 'pr'));
+    const id = slug(p.title.replace(/^P\+R/, 'pr'));
     if (SKIP.has(id)) continue;
 
     const [lng, lat] = f.geometry.coordinates;
@@ -45,9 +45,9 @@ export function toLocations(geojson) {
     const capacity = metaValue(p, 'parking-capacity');
     out.push({
       id,
-      name: isQPark ? `Q-Park ${name}` : name,
-      kind: isPr ? 'pr' : 'garage',
-      operator: isQPark ? 'Q-Park' : 'Gemeente Groningen',
+      name: p.title,
+      kind: 'pr',
+      operator: 'Gemeente Groningen',
       entrances: p.street ? [address] : [],
       lat,
       lng,
@@ -59,7 +59,7 @@ export function toLocations(geojson) {
       sourceUpdatedAt: null, // bron publiceert geen update-tijd
     });
   }
-  if (!out.length) throw new Error('geen parkeerlocaties gevonden in de bron');
+  if (!out.length) throw new Error('geen P+R-terreinen gevonden in de bron');
   return out;
 }
 

@@ -3,7 +3,6 @@
 // iedere bezoeker apart de bronnen belast.
 import { CONFIG } from './config.js';
 import * as history from './history.js';
-import { catalogFor, loadCatalog, refreshCatalog } from './catalog.js';
 import parkeren050 from './sources/parkeren050.js';
 import rdw from './sources/rdw.js';
 import groningenBereikbaar from './sources/groningenBereikbaar.js';
@@ -23,7 +22,7 @@ const groups = new Map();
 const groupOf = (source, l) => {
   const id = `${source.id}:${l.kind}:${l.operator}`;
   if (!groups.has(id)) {
-    const what = l.kind === 'pr' ? 'P+R-terreinen' : l.operator === 'Q-Park' ? 'Q-Park-garages' : 'Gemeentelijke garages';
+    const what = l.kind === 'pr' ? 'P+R-terreinen' : 'Gemeentelijke garages';
     groups.set(id, { id, label: `${what} (${source.name})`, source: source.id, tracked: !source.providesUpdateTime, lastChangeAt: null });
   }
   return groups.get(id);
@@ -133,25 +132,15 @@ export async function getParking() {
         frozen: isFrozen(g, counted),
       };
     }),
-    ...withCatalog(
-      [...locations.values()].map((l) => ({
+    locations: [...locations.values()]
+      // Alleen locaties met een live telling. Euroborg en P+R Meerstad geven meestal geen
+      // telling en verschijnen alleen als de bron wél een aantal vrije plaatsen meldt.
+      .filter((l) => l.free != null || l.closed)
+      .map((l) => ({
         ...l,
-        live: true,
-        status: l.closed ? 'closed' : l.free == null ? 'unknown' : l.free > 0 ? 'available' : 'full',
+        status: l.closed ? 'closed' : l.free > 0 ? 'available' : 'full',
       })),
-    ),
   };
-}
-
-// Live locaties aanvullen met de catalogus: ontbrekende capaciteit invullen en
-// alle overige openbare parkeerlocaties toevoegen (zonder live bezetting).
-function withCatalog(live) {
-  const { extra, enrich, fetchedAt } = catalogFor(live);
-  for (const l of live) {
-    const e = enrich.get(l.id);
-    if (e && l.capacity == null && e.capacity != null) Object.assign(l, { capacity: e.capacity, capacitySource: 'OpenStreetMap' });
-  }
-  return { catalogFetchedAt: fetchedAt, locations: [...live, ...extra] };
 }
 
 // De server meet zelf periodiek, zodat de historie doorloopt zonder bezoekers.
@@ -159,9 +148,7 @@ let started = false;
 export async function startBackground() {
   if (started) return;
   started = true;
-  await Promise.all([history.load(), loadCatalog()]);
-  refreshCatalog();
-  setInterval(() => refreshCatalog(), 3_600_000).unref(); // ververst zelf alleen als de lijst > 24 uur oud is
+  await history.load();
   const poll = () => getParking().catch((err) => console.warn(`[poll] ${err.message}`));
   poll();
   setInterval(poll, Math.max(CONFIG.pollSeconds * 1000, CONFIG.cacheTtlMs)).unref();

@@ -9,49 +9,6 @@ const TEXT = {
   gray: 'text-slate-400',
 };
 
-const SOURCE_NAME = { osm: 'OpenStreetMap', 'rdw-static': 'RDW-registratie' };
-const FEE = { yes: 'Betaald', no: 'Gratis' };
-const dateFmt = new Intl.DateTimeFormat('nl-NL', { timeZone: 'Europe/Amsterdam', day: 'numeric', month: 'long', year: 'numeric' });
-
-// Locatie zonder live bezetting: alleen vaste gegevens, geen getal dat een stand suggereert.
-function StaticDetails({ l, data }) {
-  const rows = [
-    ['Capaciteit', l.capacity ? `${l.capacity} plaatsen` : null],
-    ['Kosten', l.fee ? (FEE[l.fee] ?? l.fee) : null],
-    ['Exploitant', l.operator],
-  ].filter(([, v]) => v);
-  return (
-    <>
-      <p className="mt-4 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-600">
-        Voor deze locatie is geen live bezetting beschikbaar. Je ziet alleen de vaste gegevens.
-      </p>
-      <dl className="mt-3 space-y-1 text-xs text-slate-500">
-        {rows.map(([k, v]) => (
-          <div key={k} className="flex justify-between gap-3">
-            <dt>{k}</dt>
-            <dd className="text-right font-medium text-slate-700">{v}</dd>
-          </div>
-        ))}
-        <div className="flex justify-between gap-3">
-          <dt>Bron</dt>
-          <dd className="text-right">
-            <a href={l.url} target="_blank" rel="noopener noreferrer" className="underline decoration-slate-300 underline-offset-2 hover:text-slate-800">
-              {SOURCE_NAME[l.source] ?? l.source}
-            </a>
-            {l.registeredAt && ` (bijgewerkt ${dateFmt.format(new Date(l.registeredAt))})`}
-          </dd>
-        </div>
-        {data.catalogFetchedAt && (
-          <div className="flex justify-between gap-3">
-            <dt>Lijst opgehaald</dt>
-            <dd className="text-right">{dateFmt.format(new Date(data.catalogFetchedAt))}</dd>
-          </div>
-        )}
-      </dl>
-    </>
-  );
-}
-
 export default function GarageCard({ location: l, data, now, onClose }) {
   const level = levelOf(l, data, now);
   const stale = isStale(l, data, now);
@@ -73,7 +30,7 @@ export default function GarageCard({ location: l, data, now, onClose }) {
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium tracking-wider text-slate-400 uppercase">
-            {l.typeLabel ?? (l.kind === 'pr' ? 'P+R-terrein' : 'Parkeergarage')}
+            {l.kind === 'pr' ? 'P+R-terrein' : 'Parkeergarage'}
             {l.operator && ` · ${l.operator}`}
           </p>
           <h2 className="text-xl leading-tight font-semibold tracking-tight text-slate-900">{l.name}</h2>
@@ -95,79 +52,73 @@ export default function GarageCard({ location: l, data, now, onClose }) {
         </button>
       </div>
 
-      {l.live === false ? (
-        <StaticDetails l={l} data={data} now={now} />
-      ) : (
-        <>
-          <div className="mt-4 flex items-end gap-2">
-            {l.status === 'closed' ? (
-              <span className="text-base font-medium text-slate-500">Gesloten volgens de bron</span>
-            ) : hasValue ? (
-              <>
-                <span className={`text-4xl leading-none font-bold tracking-tight tabular-nums ${TEXT[level]}`}>
-                  {l.free === 0 ? 'Vol' : l.free}
-                </span>
-                {l.free > 0 && (
-                  <span className="pb-0.5 text-sm text-slate-500">
-                    vrije plaatsen{l.capacity ? ` van ${l.capacity}` : ''}
-                  </span>
-                )}
-              </>
-            ) : (
-              <span className="text-base font-medium text-slate-500">Geen actuele bezetting beschikbaar</span>
-            )}
-            {hasValue && stale && (
-              <span className="mb-0.5 ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
-                Verouderd
+      <div className="mt-4 flex items-end gap-2">
+        {l.status === 'closed' ? (
+          <span className="text-base font-medium text-slate-500">Gesloten volgens de bron</span>
+        ) : hasValue ? (
+          <>
+            <span className={`text-4xl leading-none font-bold tracking-tight tabular-nums ${TEXT[level]}`}>
+              {l.free === 0 ? 'Vol' : l.free}
+            </span>
+            {l.free > 0 && (
+              <span className="pb-0.5 text-sm text-slate-500">
+                vrije plaatsen{l.capacity ? ` van ${l.capacity}` : ''}
               </span>
             )}
-          </div>
+          </>
+        ) : (
+          <span className="text-base font-medium text-slate-500">Geen actuele bezetting beschikbaar</span>
+        )}
+        {hasValue && stale && (
+          <span className="mb-0.5 ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+            Verouderd
+          </span>
+        )}
+      </div>
 
-          {(stale || source?.error) && (
-            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
-              {stale && hasValue && !group?.frozen && 'Dit is mogelijk niet de actuele stand; de situatie kan afwijken. '}
-              {stale && !l.lastCheckedAt && 'Er zijn nog geen gegevens van deze locatie opgehaald. '}
-              {group?.frozen &&
-                `Geen enkele waarde van de ${group.label} is veranderd sinds ${formatTime(group.lastChangeAt, now)}; deze data is mogelijk niet actueel. `}
-              {source?.error && `Laatste ophaalpoging bij ${source.name} mislukt: ${source.error}.`}
-            </p>
-          )}
-
-          <dl className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
-            <div className="flex justify-between gap-3">
-              <dt>Laatst gecontroleerd</dt>
-              <dd className="font-medium text-slate-700 tabular-nums">{formatTime(l.lastCheckedAt, now) ?? 'nog niet gelukt'}</dd>
-            </div>
-            <div className="flex justify-between gap-3">
-              <dt>Update-tijd bron</dt>
-              <dd className={`text-right ${l.sourceUpdatedAt ? 'font-medium text-slate-700 tabular-nums' : 'text-slate-500'}`}>
-                {l.sourceUpdatedAt ? formatTime(l.sourceUpdatedAt, now) : 'niet gepubliceerd door bron'}
-              </dd>
-            </div>
-            {l.valueSince && hasValue && (
-              <div className="flex justify-between gap-3">
-                <dt>Waarde ongewijzigd sinds</dt>
-                <dd className="text-right text-slate-500 tabular-nums">
-                  {formatTime(l.valueSince, now)}
-                  {l.valueSinceIsUpperBound && ' of eerder'}
-                </dd>
-              </div>
-            )}
-            {source && (
-              <div className="flex justify-between gap-3">
-                <dt>Bron</dt>
-                <dd className="text-right">
-                  <a href={l.url || source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-slate-300 underline-offset-2 hover:text-slate-800">
-                    {source.name}
-                  </a>
-                </dd>
-              </div>
-            )}
-          </dl>
-
-          <TrendPanel id={l.id} refreshKey={data.serverTime} now={now} />
-        </>
+      {(stale || source?.error) && (
+        <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+          {stale && hasValue && !group?.frozen && 'Dit is mogelijk niet de actuele stand; de situatie kan afwijken. '}
+          {stale && !l.lastCheckedAt && 'Er zijn nog geen gegevens van deze locatie opgehaald. '}
+          {group?.frozen &&
+            `Geen enkele waarde van de ${group.label} is veranderd sinds ${formatTime(group.lastChangeAt, now)}; deze data is mogelijk niet actueel. `}
+          {source?.error && `Laatste ophaalpoging bij ${source.name} mislukt: ${source.error}.`}
+        </p>
       )}
+
+      <dl className="mt-4 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
+        <div className="flex justify-between gap-3">
+          <dt>Laatst gecontroleerd</dt>
+          <dd className="font-medium text-slate-700 tabular-nums">{formatTime(l.lastCheckedAt, now) ?? 'nog niet gelukt'}</dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt>Update-tijd bron</dt>
+          <dd className={`text-right ${l.sourceUpdatedAt ? 'font-medium text-slate-700 tabular-nums' : 'text-slate-500'}`}>
+            {l.sourceUpdatedAt ? formatTime(l.sourceUpdatedAt, now) : 'niet gepubliceerd door bron'}
+          </dd>
+        </div>
+        {l.valueSince && hasValue && (
+          <div className="flex justify-between gap-3">
+            <dt>Waarde ongewijzigd sinds</dt>
+            <dd className="text-right text-slate-500 tabular-nums">
+              {formatTime(l.valueSince, now)}
+              {l.valueSinceIsUpperBound && ' of eerder'}
+            </dd>
+          </div>
+        )}
+        {source && (
+          <div className="flex justify-between gap-3">
+            <dt>Bron</dt>
+            <dd className="text-right">
+              <a href={l.url || source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-slate-300 underline-offset-2 hover:text-slate-800">
+                {source.name}
+              </a>
+            </dd>
+          </div>
+        )}
+      </dl>
+
+      <TrendPanel id={l.id} refreshKey={data.serverTime} now={now} />
 
       {(l.tariffs.length > 0 || l.openingHours) && (
         <div className="mt-3 border-t border-slate-100 pt-3 text-sm">
