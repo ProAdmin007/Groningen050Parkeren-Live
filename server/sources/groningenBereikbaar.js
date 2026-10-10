@@ -47,7 +47,7 @@ export function toLocations(geojson) {
       id,
       name: p.title,
       kind: 'pr',
-      operator: 'Gemeente Groningen',
+      operator: 'Gemeente Groningen', city: 'Groningen',
       entrances: p.street ? [address] : [],
       lat,
       lng,

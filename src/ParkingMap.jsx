@@ -7,7 +7,7 @@ const TILE_ATTRIBUTION =
   import.meta.env.VITE_TILE_ATTRIBUTION ||
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-bijdragers';
 
-const CENTER = [53.2165, 6.5745];
+const CENTER = [52.2, 5.3]; // midden van Nederland
 // Onder dit zoomniveau worden markers compacter, zodat ze minder overlappen.
 const COMPACT_BELOW = 14;
 
@@ -40,35 +40,79 @@ function titleFor(loc, data, now) {
   return `${loc.name}: ${value}${loc.free != null && isStale(loc, data, now) ? ' (verouderd)' : ''}`;
 }
 
-export default function ParkingMap({ data, now, selectedId, onSelect }) {
+// setIcon vervangt het element: titel en aria-label daarna opnieuw zetten.
+function applyTitle(marker) {
+  const el = marker.getElement();
+  if (el && marker.pgTitle) {
+    el.setAttribute('title', marker.pgTitle);
+    el.setAttribute('aria-label', marker.pgTitle);
+  }
+}
+
+// Onder dit zoomniveau toont de kaart één bundelmarker per stad.
+const CITY_BELOW = 10.5;
+
+function cityIcon(c) {
+  const big = c.count >= 3;
+  return L.divIcon({
+    className: 'pg-icon',
+    iconSize: [0, 0],
+    html: `<div class="pg-city${big ? '' : ' pg-city-small'}"><span class="pg-city-count">${c.count}</span>${big ? `<span class="pg-city-name">${esc(c.name)}</span>` : ''}</div>`,
+  });
+}
+
+const padding = () =>
+  window.innerWidth < 640 ? { paddingTopLeft: [24, 100], paddingBottomRight: [24, 60] } : { paddingTopLeft: [40, 110], paddingBottomRight: [40, 60] };
+
+export default function ParkingMap({ data, now, selectedId, onSelect, citySlug, onSelectCity }) {
   const container = useRef(null);
   const map = useRef(null);
+  const layers = useRef(null);
   const markers = useRef(new Map());
+  const cityMarkers = useRef(new Map());
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
-  const fitted = useRef(false);
+  const onSelectCityRef = useRef(onSelectCity);
+  onSelectCityRef.current = onSelectCity;
+  const fittedFor = useRef(undefined);
 
   useEffect(() => {
-    const m = L.map(container.current, { zoomControl: false, center: CENTER, zoom: 14, zoomSnap: 0.25 });
+    const m = L.map(container.current, { zoomControl: false, center: CENTER, zoom: 8, zoomSnap: 0.25 });
     L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(m);
     L.control.zoom({ position: 'bottomright' }).addTo(m);
     m.attributionControl.setPrefix(false);
     m.on('click', () => onSelectRef.current(null));
-    const setCompact = () => container.current?.classList.toggle('pg-compact', m.getZoom() < COMPACT_BELOW);
-    m.on('zoomend', setCompact);
-    setCompact();
+    const locLayer = L.layerGroup();
+    const cityLayer = L.layerGroup();
+    layers.current = { locLayer, cityLayer };
+    const onZoom = () => {
+      const z = m.getZoom();
+      container.current?.classList.toggle('pg-compact', z < COMPACT_BELOW);
+      const showCities = z < CITY_BELOW;
+      if (showCities && !m.hasLayer(cityLayer)) {
+        m.removeLayer(locLayer);
+        m.addLayer(cityLayer);
+      } else if (!showCities && !m.hasLayer(locLayer)) {
+        m.removeLayer(cityLayer);
+        m.addLayer(locLayer);
+      }
+    };
+    m.on('zoomend', onZoom);
+    onZoom();
     map.current = m;
     return () => {
       m.remove();
       map.current = null;
       markers.current.clear();
-      fitted.current = false;
+      cityMarkers.current.clear();
+      fittedFor.current = undefined;
     };
   }, []);
 
   useEffect(() => {
     const m = map.current;
     if (!m || !data) return;
+    const { locLayer, cityLayer } = layers.current;
     for (const loc of data.locations) {
       const selected = loc.id === selectedId;
       let marker = markers.current.get(loc.id);
@@ -79,7 +123,9 @@ export default function ParkingMap({ data, now, selectedId, onSelect }) {
             L.DomEvent.stopPropagation(e);
             onSelectRef.current(loc.id);
           })
-          .addTo(m);
+          // De laag kan nog verborgen zijn (ver uitgezoomd): titel zetten zodra de marker verschijnt.
+          .on('add', (e) => applyTitle(e.target))
+          .addTo(locLayer);
         markers.current.set(loc.id, marker);
       } else {
         marker.setLatLng([loc.lat, loc.lng]);
@@ -87,11 +133,8 @@ export default function ParkingMap({ data, now, selectedId, onSelect }) {
       }
       // Garages boven P+R; geselecteerde marker altijd bovenop.
       marker.setZIndexOffset(selected ? 2000 : loc.kind === 'pr' ? 0 : 500);
-      const el = marker.getElement();
-      if (el) {
-        el.setAttribute('title', titleFor(loc, data, now));
-        el.setAttribute('aria-label', titleFor(loc, data, now));
-      }
+      marker.pgTitle = titleFor(loc, data, now);
+      applyTitle(marker);
     }
     const ids = new Set(data.locations.map((l) => l.id));
     for (const [id, marker] of markers.current) {
@@ -100,18 +143,51 @@ export default function ParkingMap({ data, now, selectedId, onSelect }) {
         markers.current.delete(id);
       }
     }
-    if (!fitted.current) {
-      fitted.current = true;
-      // Start op de binnenstad (de garages); P+R-terreinen aan de rand zie je door uit te zoomen.
-      const centre = data.locations.filter((l) => l.kind === 'garage');
-      const mobile = window.innerWidth < 640;
-      m.fitBounds(L.latLngBounds((centre.length ? centre : data.locations).map((l) => [l.lat, l.lng])), {
-        paddingTopLeft: mobile ? [24, 100] : [40, 110],
-        paddingBottomRight: mobile ? [24, 60] : [40, 60],
-        maxZoom: 15,
-      });
+
+    // Bundelmarkers per stad (alleen zichtbaar bij ver uitzoomen).
+    const slugs = new Set();
+    for (const c of data.cities) {
+      slugs.add(c.slug);
+      let marker = cityMarkers.current.get(c.slug);
+      if (!marker) {
+        marker = L.marker([c.lat, c.lng], { icon: cityIcon(c), keyboard: true, title: `${c.name}: ${c.count} locaties met live bezetting` })
+          .on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            onSelectCityRef.current(c.slug);
+          })
+          .addTo(cityLayer);
+        cityMarkers.current.set(c.slug, marker);
+      } else {
+        marker.setLatLng([c.lat, c.lng]);
+        marker.setIcon(cityIcon(c));
+      }
+      marker.setZIndexOffset(c.count * 10);
+    }
+    for (const [slug, marker] of cityMarkers.current) {
+      if (!slugs.has(slug)) {
+        marker.remove();
+        cityMarkers.current.delete(slug);
+      }
     }
   }, [data, now, selectedId]);
+
+  // Inzoomen op de gekozen stad (of heel Nederland) bij het laden en bij een andere keuze.
+  useEffect(() => {
+    const m = map.current;
+    if (!m || !data?.locations.length) return;
+    const key = citySlug ?? '';
+    if (fittedFor.current === key) return;
+    fittedFor.current = key;
+    if (citySlug) {
+      const inCity = data.locations.filter((l) => l.citySlug === citySlug);
+      // Start op de garages in het centrum; P+R-terreinen aan de rand zie je door uit te zoomen.
+      const garages = inCity.filter((l) => l.kind === 'garage');
+      const focus = garages.length >= 2 ? garages : inCity;
+      m.fitBounds(L.latLngBounds(focus.map((l) => [l.lat, l.lng])), { ...padding(), maxZoom: 15 });
+    } else {
+      m.fitBounds(L.latLngBounds(data.locations.map((l) => [l.lat, l.lng])), { ...padding(), maxZoom: 15 });
+    }
+  }, [data, citySlug]);
 
   // Geselecteerde locatie in beeld houden boven het informatievenster.
   useEffect(() => {
@@ -126,5 +202,5 @@ export default function ParkingMap({ data, now, selectedId, onSelect }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId]);
 
-  return <div ref={container} className="absolute inset-0 z-0" role="application" aria-label="Kaart van Groningen met parkeerlocaties" />;
+  return <div ref={container} className="absolute inset-0 z-0" role="application" aria-label="Kaart met parkeerlocaties met live bezetting" />;
 }

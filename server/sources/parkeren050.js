@@ -70,7 +70,7 @@ export default {
   name: 'parkeren050.nl',
   url: URL_,
   // Vaste lijst: deze garages staan altijd op de kaart, ook als de bron faalt.
-  initial: GARAGES.map((g) => ({ ...g, kind: 'garage', operator: 'Gemeente Groningen' })),
+  initial: GARAGES.map((g) => ({ ...g, kind: 'garage', operator: 'Gemeente Groningen', city: 'Groningen' })),
   async fetch() {
     const html = await (await fetchSource(URL_, 'text/html')).text();
     const known = new Map(GARAGES.map((g) => [g.id, g]));
@@ -79,7 +79,7 @@ export default {
       .map((p) => ({
         ...known.get(p.id),
         kind: 'garage',
-        operator: 'Gemeente Groningen',
+        operator: 'Gemeente Groningen', city: 'Groningen',
         name: p.name || known.get(p.id).name,
         entrances: p.entrances.length ? p.entrances : known.get(p.id).entrances,
         free: p.free,

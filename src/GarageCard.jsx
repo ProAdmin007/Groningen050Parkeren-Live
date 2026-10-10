@@ -30,7 +30,7 @@ export default function GarageCard({ location: l, data, now, onClose }) {
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-[11px] font-medium tracking-wider text-slate-400 uppercase">
-            {l.kind === 'pr' ? 'P+R-terrein' : 'Parkeergarage'}
+            {l.kind === 'pr' ? 'P+R-terrein' : l.kind === 'lot' ? 'Parkeerterrein' : 'Parkeergarage'}
             {l.operator && ` · ${l.operator}`}
           </p>
           <h2 className="text-xl leading-tight font-semibold tracking-tight text-slate-900">{l.name}</h2>

@@ -186,6 +186,52 @@ body {
   border-bottom: 1.5px solid currentColor;
 }
 
+/* Bundelmarker per stad (ver uitgezoomd) */
+.pg-city {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px 3px 3px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #0f172a;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.15), 0 8px 18px -6px rgb(15 23 42 / 0.5);
+  transition: transform 160ms ease;
+}
+.pg-city:hover {
+  transform: translate(-50%, -50%) scale(1.08);
+}
+.pg-city-count {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.pg-city-small {
+  padding: 2px;
+}
+.pg-city-small .pg-city-count {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
 .pg-card {
   animation: pg-in 200ms ease-out;
 }

@@ -16,6 +16,8 @@ export const CONFIG = {
   frozenAfterSeconds: env('FROZEN_AFTER_SECONDS', 1800),
   // Historie voor de trendanalyse: de server meet zelf elke POLL_SECONDS, ook zonder bezoekers.
   pollSeconds: env('POLL_SECONDS', 60),
+  // De landelijke RDW-feeds (~250 locaties) minder vaak ophalen, om de RDW niet te belasten.
+  rdwPollSeconds: env('RDW_POLL_SECONDS', 120),
   historyDays: env('HISTORY_DAYS', 7),
   // Leeg = niet opslaan (historie alleen in het geheugen).
   historyFile: process.env.HISTORY_FILE ?? 'data/history.json',

@@ -1,6 +1,6 @@
-# Parkeren Groningen: live vrije parkeerplaatsen op de kaart
+# Parkeren Live: vrije parkeerplaatsen in Nederland op de kaart
 
-**Zie direct op de kaart waar je in Groningen nog kunt parkeren, en hoe actueel die informatie is.**
+**Zie direct op de kaart waar je in Amsterdam, Rotterdam, Utrecht, Groningen en tientallen andere gemeenten nog kunt parkeren, en hoe actueel die informatie is.**
 
 [![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
@@ -8,10 +8,10 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 [![Open data](https://img.shields.io/badge/data-open%20data-0f172a)](#databronnen)
 
-Een lichte webapp die de **actuele parkeerbezetting in Groningen** toont: het aantal vrije plaatsen in de parkeergarages en op de P+R-terreinen, op één kaart. De kaart toont **alleen locaties met een live bezetting**.
+Een lichte webapp die de **actuele parkeerbezetting in Nederland** toont: het aantal vrije plaatsen in parkeergarages, op parkeerterreinen en op P+R-terreinen, op één kaart. De kaart toont **alleen locaties met een live bezetting**. Bij de laatste test waren dat ongeveer 236 locaties in 62 gemeenten, waaronder:
 
-- **Parkeergarages:** Forum, Damsterdiep, Boterdiep, Circus en Station Europapark. Euroborg verschijnt zodra de bron er een telling voor geeft.
-- **P+R-terreinen:** Hoofdstation, Kardinge, Haren 1 en 2, Hoogkerk 1 en 2 en Reitdiep.
+- **Amsterdam** (~34), **Almere** (~17), **Rotterdam** (~15), **Delft** (~13), **Groningen** (12), **Nijmegen** (~11), **Utrecht** (~10), **Tilburg** (7), **Den Haag** (5), **Arnhem** (4) en vele kleinere.
+- Elke stad heeft een eigen adres, zoals `/amsterdam` of `/groningen`. Via de naam in de header kies je een andere stad.
 
 De kaart ververst automatisch. Per locatie zie je ook een trendanalyse: loopt de garage vol, en hoe druk is het normaal rond dit tijdstip? Er zijn geen accounts, geen advertenties en geen verzonnen cijfers. Alles komt uit open data.
 
@@ -21,7 +21,7 @@ De kaart ververst automatisch. Per locatie zie je ook een trendanalyse: loopt de
   <img src="docs/infovenster-mobiel.png" alt="Informatievenster van P+R Hoofdstation op een smartphone, met vrije plaatsen en bron-update-tijd" width="22%">
 </p>
 
-> **English:** Live map of available parking spaces in Groningen, the Netherlands. It shows only locations with live occupancy data: municipal parking garages and park-and-ride (P+R) sites, with per-location trend analysis. Data comes from parkeren050.nl, RDW open parking data and Groningen Bereikbaar. The app is built with React, Leaflet/OpenStreetMap and a dependency-free Node.js backend, and is ready for Docker.
+> **English:** Live map of available parking spaces in the Netherlands, with a page per city (Amsterdam, Rotterdam, Utrecht, Groningen and more). It shows only locations with live occupancy data: parking garages, car parks and park-and-ride (P+R) sites, with per-location trend analysis. Data comes from the national RDW open parking data, plus parkeren050.nl and Groningen Bereikbaar for Groningen. The app is built with React, Leaflet/OpenStreetMap and a dependency-free Node.js backend, and is ready for Docker.
 
 ---
 
@@ -39,7 +39,8 @@ Elke marker toont direct het aantal vrije plaatsen. Je hoeft er niet op te klikk
 - Een marker met **P** is een parkeergarage, een marker met **P+R** een P+R-terrein.
 - Klik op een marker voor het informatievenster. Daarin staan het adres, de vrije plaatsen (met capaciteit als die bekend is), het tarief, de bron en de tijden. Er is ook een knop om te navigeren met Google Maps.
 - In het informatievenster staat ook een **trendanalyse** per locatie, zie [Trendanalyse](#trendanalyse).
-- De kaart opent op de binnenstad. Zoom uit om de P+R-terreinen aan de rand van de stad te zien.
+- Op `/` zie je heel Nederland. Ver uitgezoomd toont de kaart per stad één donkere **bundelmarker** met het aantal live locaties; klik erop om naar die stad te gaan.
+- Op een stadspagina opent de kaart op de garages in het centrum. Zoom uit om de P+R-terreinen aan de rand te zien.
 - De gegevens verversen **automatisch elke 60 seconden** zonder dat de pagina herlaadt, en direct wanneer je terugkeert naar het tabblad. Met de knop rechtsboven ververs je handmatig.
 - Alle tijden staan in de tijdzone Europe/Amsterdam.
 
@@ -68,8 +69,8 @@ Wil je een andere poort? Gebruik dan `PORT=3050 npm start`. In PowerShell is dat
 ### Docker
 
 ```bash
-docker build -t parkeren-groningen .
-docker run -p 3000:3000 -v parkeren-data:/app/data parkeren-groningen
+docker build -t parkeren-live .
+docker run -p 3000:3000 -v parkeren-data:/app/data parkeren-live
 ```
 
 Het volume `parkeren-data` bewaart de historie voor de trendanalyse, ook bij updates van de container. Het image is meertraps opgebouwd. Het runtime-image bevat alleen `server/` en de gebouwde frontend, zonder `node_modules`. Een healthcheck draait op `/healthz`.
@@ -82,19 +83,25 @@ Alle cijfers komen live uit openbare bronnen. Er is geen mock- of voorbeelddata.
 
 | Bron | Locaties | Update-tijd van de bron | Hoe actueel |
 | --- | --- | --- | --- |
-| [parkeren050.nl](https://www.parkeren050.nl/parkeren-groningen) | Gemeentelijke garages: Forum, Damsterdiep, Boterdiep, Circus, Station Europapark (en Euroborg zodra die een telling heeft) | ✗ | ✅ Live, verandert van minuut tot minuut |
-| [RDW open parkeerdata](https://npropendata.rdw.nl/parkingdata/v2/) | P+R Hoofdstation | ✓ | ✅ Live, met tijdstempel van de bron |
-| [Groningen Bereikbaar](https://kaart.groningenbereikbaar.nl) | P+R-terreinen: Haren 1 en 2, Reitdiep, Kardinge, Hoogkerk 1 en 2 | ✗ | 🟡 Ongeveer elke 16 minuten bijgewerkt |
+| [RDW open parkeerdata](https://npropendata.rdw.nl/parkingdata/v2/) | Alle openbare live-feeds in Nederland, ongeveer 225 locaties | ✓ | ✅ Live, met tijdstempel van de bron |
+| [parkeren050.nl](https://www.parkeren050.nl/parkeren-groningen) | Groningen: gemeentelijke garages Forum, Damsterdiep, Boterdiep, Circus, Station Europapark | ✗ | ✅ Live, verandert van minuut tot minuut |
+| [Groningen Bereikbaar](https://kaart.groningenbereikbaar.nl) | Groningen: P+R-terreinen Haren 1 en 2, Reitdiep, Kardinge, Hoogkerk 1 en 2 | ✗ | 🟡 Ongeveer elke 16 minuten bijgewerkt |
 
 ### Hoe de data wordt opgehaald
 
+- **RDW (SPDP v2)** is de landelijke open parkeerdata, met bijna 15.000 geregistreerde locaties. Daarvan hebben er zo'n 540 een live-feed; ongeveer 250 daarvan zijn openbaar en actueel. De server werkt zo:
+  - de lijst en de vaste gegevens (naam, plek, capaciteit, exploitant) worden dagelijks ververst en bewaard in `data/rdw-facilities.json`;
+  - de live stand wordt elke 2 minuten opgehaald (`RDW_POLL_SECONDS`), met 10 verzoeken tegelijk;
+  - de gemeente per locatie komt van [PDOK](https://www.pdok.nl/introductie/-/article/pdok-locatieserver), zodat bijvoorbeeld "Almere Buiten" onder Almere valt;
+  - **afgeschermde feeds** (HTTP 401, vrijwel allemaal Q-Park) worden 24 uur overgeslagen;
+  - **dode feeds**, waarvan de bron al meer dan 24 uur niets heeft bijgewerkt, worden niet getoond.
 - **parkeren050.nl** heeft geen API. De bezetting staat server-side in de HTML (`<p class="available-spaces">158 plaatsen vrij</p>` of `VOL`). Een kleine scraper leest de overzichtspagina. Daar komen ook de namen, adressen, tarieven en openingstijden vandaan.
-- **RDW (SPDP v2)** is de landelijke open parkeerdata. In Groningen is P+R Hoofdstation de enige locatie met openbare live data. De live-feeds van de Q-Park-garages staan er ook, maar zijn afgeschermd (`limitedAccess`, HTTP 401).
+- **Ontdubbelen:** staat dezelfde garage in twee bronnen (binnen 60 meter), dan telt de eerste bron. Forum in Groningen staat bijvoorbeeld ook in de RDW-data, maar komt van parkeren050.nl, omdat daar ook adres, tarief en openingstijden bij staan.
 - **Groningen Bereikbaar** gebruikt een openbare GeoJSON-API (`/api/maps/1.json`) achter de "Slimme Kaart". Die geeft per locatie de capaciteit en het aantal beschikbare plekken, maar geen tijdstempel.
 
 ### Bevindingen over de actualiteit
 
-Gemeten op 10 oktober 2026:
+Gemeten op 10 oktober 2026. Van de 544 live-feeds in de RDW-data waren er 247 actueel (bijgewerkt in het laatste uur), 220 afgeschermd (HTTP 401), 72 al meer dan een dag niet bijgewerkt en 5 zonder telling of onbereikbaar. Voor Groningen:
 
 - **P+R-terreinen (Groningen Bereikbaar):** de waarden veranderden om 12:30:50 en 12:46:55, dus ongeveer elke 16 minuten. Een getoonde waarde kan tot zo'n kwartier oud zijn.
 - **Q-Park-garages (niet opgenomen):** Groningen Bereikbaar noemt ook vijf Q-Park-garages (Westerhaven, Museum Centrum, Rademarkt, Ossenmarkt, Oosterpoort). Hun waarden bleven van 12:22 tot minstens 17:27 exact gelijk, ruim vijf uur op een zaterdag in de binnenstad. Dezelfde bron meldde voor P+R Hoofdstation 146 van de 146 plaatsen vrij, terwijl de RDW tegelijkertijd 126 tot 128 vrij gaf. Deze cijfers zijn niet live, dus de app neemt ze niet op. De echte live-feed van Q-Park bij de RDW is afgeschermd (HTTP 401).
@@ -169,7 +176,8 @@ Alle instellingen zijn omgevingsvariabelen van de server.
 | `FROZEN_AFTER_SECONDS` | `1800` | Een groep zonder één enkele wijziging in deze tijd heet "mogelijk niet actueel" |
 | `POLL_SECONDS` | `60` | Hoe vaak de server zelf meet, voor de historie |
 | `HISTORY_DAYS` | `7` | Hoe lang de historie wordt bewaard |
-| `HISTORY_FILE` | `data/history.json` | Bestand voor de historie. Leeg laten betekent alleen in het geheugen. |
+| `HISTORY_FILE` | `data/history.json` | Bestand voor de historie. Leeg laten betekent alleen in het geheugen. De RDW-cache komt in dezelfde map. |
+| `RDW_POLL_SECONDS` | `120` | Hoe vaak de landelijke RDW-feeds worden opgehaald |
 | `SOURCE_URL` | `https://www.parkeren050.nl/parkeren-groningen` | Bronpagina van parkeren050.nl |
 
 Twee instellingen gelden tijdens de build:
@@ -182,7 +190,7 @@ Twee instellingen gelden tijdens de build:
 Voorbeeld:
 
 ```bash
-docker run -p 3000:3000 -e THRESHOLD_LOW=30 parkeren-groningen
+docker run -p 3000:3000 -e THRESHOLD_LOW=30 parkeren-live
 ```
 
 ---
@@ -212,7 +220,7 @@ server/
   config.js                   instellingen en fetch met time-out
   sources/
     parkeren050.js            gemeentelijke garages (scraper)
-    rdw.js                    P+R Hoofdstation (RDW)
+    rdw.js                    alle openbare live-feeds in Nederland (RDW + PDOK)
     groningenBereikbaar.js    P+R-terreinen
 src/
   App.jsx                     verversen, foutafhandeling, klokcorrectie
@@ -234,8 +242,10 @@ src/
   "thresholds": { "low": 50 },
   "sources":   [{ "id": "rdw", "name": "RDW open parkeerdata", "lastSuccessAt": "…", "error": null }],
   "groups":    [{ "id": "groningen-bereikbaar:pr:Gemeente Groningen", "label": "P+R-terreinen (Groningen Bereikbaar)", "frozen": false }],
+  "cities":    [{ "slug": "amsterdam", "name": "Amsterdam", "count": 34, "free": 5210, "lat": 52.36, "lng": 4.9 }],
   "locations": [{
-    "id": "pr-hoofdstation", "name": "P+R Hoofdstation", "kind": "pr",
+    "id": "pr-hoofdstation", "name": "P+R Hoofdstation", "kind": "pr",   // kind: garage | pr | lot
+    "city": "Groningen", "citySlug": "groningen",
     "lat": 53.211582, "lng": 6.560898,
     "free": 125, "capacity": 146, "status": "available",
     "lastCheckedAt": "…", "sourceUpdatedAt": "…", "valueSince": "…"
