@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+:root {
+  --pg-green: #16a34a;
+  --pg-orange: #e07b00;
+  --pg-red: #dc2626;
+  --pg-gray: #8a94a6;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #f1f5f9;
+  overscroll-behavior: none;
+}
+
+/* Leaflet */
+.leaflet-container {
+  font: inherit;
+  background: #eef0f3;
+}
+/* OSM-tegels iets rustiger, zodat de markers de aandacht krijgen */
+.leaflet-tile-pane {
+  filter: saturate(0.55) brightness(1.04) contrast(0.95);
+}
+.leaflet-control-attribution {
+  font-size: 10px;
+  background: rgb(255 255 255 / 0.7) !important;
+  border-top-left-radius: 8px;
+}
+.leaflet-bar {
+  border: 0 !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 20px -8px rgb(15 23 42 / 0.35) !important;
+}
+.leaflet-bar a {
+  width: 38px !important;
+  height: 38px !important;
+  line-height: 38px !important;
+  color: #334155 !important;
+  border-color: #f1f5f9 !important;
+}
+.leaflet-bottom.leaflet-right {
+  margin-bottom: max(0px, env(safe-area-inset-bottom));
+}
+@media (max-width: 639px) {
+  .leaflet-control-zoom {
+    display: none;
+  }
+}
+
+/* Markers */
+.pg-icon {
+  background: none;
+  border: 0;
+}
+.pg-marker {
+  --c: var(--pg-gray);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translate(-50%, -100%);
+  transform-origin: 50% 100%;
+  transition: transform 160ms ease;
+  cursor: pointer;
+}
+.pg-green { --c: var(--pg-green); }
+.pg-orange { --c: var(--pg-orange); }
+.pg-red { --c: var(--pg-red); }
+.pg-gray { --c: var(--pg-gray); }
+
+.leaflet-marker-icon:hover .pg-marker,
+.pg-selected {
+  transform: translate(-50%, -100%) scale(1.12);
+}
+.pg-pill {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 11px 3px 3px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: var(--c);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12), 0 8px 18px -6px rgb(15 23 42 / 0.45);
+}
+.pg-p {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.24);
+  font-size: 12px;
+  font-weight: 800;
+}
+.pg-tip {
+  width: 10px;
+  height: 10px;
+  margin-top: -7px;
+  background: var(--c);
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+}
+@media (max-width: 639px) {
+  .pg-pill {
+    gap: 4px;
+    padding: 2px 8px 2px 2px;
+    font-size: 13px;
+  }
+  .pg-p {
+    width: 18px;
+    height: 18px;
+    font-size: 10px;
+  }
+}
+/* P+R: herkenbaar aan het bredere label */
+.pg-pr .pg-p {
+  width: auto;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+/* Uitgezoomd: kleinere markers zonder P-label */
+.pg-compact .pg-pill {
+  gap: 0;
+  padding: 2px 7px;
+  font-size: 12px;
+  border-width: 1.5px;
+}
+.pg-compact .pg-tip {
+  width: 8px;
+  height: 8px;
+  margin-top: -5px;
+  border-width: 1.5px;
+}
+.pg-compact .pg-p,
+.pg-compact .pg-clock {
+  display: none;
+}
+
+.pg-selected .pg-pill {
+  box-shadow: 0 0 0 4px rgb(15 23 42 / 0.18), 0 10px 22px -6px rgb(15 23 42 / 0.5);
+}
+
+/* Verouderde waarde: grijs, doorzichtiger, met klokje */
+.pg-stale .pg-num {
+  opacity: 0.85;
+}
+.pg-clock {
+  width: 12px;
+  height: 12px;
+  margin-left: -2px;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  position: relative;
+  opacity: 0.9;
+}
+.pg-clock::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 3px;
+  height: 4px;
+  border-left: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+}
+
+.pg-card {
+  animation: pg-in 200ms ease-out;
+}
+@keyframes pg-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pg-card,
+  .pg-marker {
+    animation: none;
+    transition: none;
+  }
+}
