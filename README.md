@@ -10,7 +10,7 @@
 
 Een lichte webapp die de **actuele parkeerbezetting in Nederland** toont: het aantal vrije plaatsen in parkeergarages, op parkeerterreinen en op P+R-terreinen, op één kaart. De kaart toont **alleen locaties met een live bezetting**. Bij de laatste test waren dat ongeveer 276 locaties in 63 gemeenten, waaronder:
 
-- **Amsterdam** (~34), **Almere** (~17), **Rotterdam** (~30), **Delft** (~13), **Groningen** (12), **Nijmegen** (~11), **Utrecht** (~14), **Tilburg** (7), **Den Haag** (5), **Arnhem** (4) en vele kleinere.
+- **Amsterdam** (34), **Rotterdam** (23), **Almere** (18), **Utrecht** (14), **Delft** (13), **Groningen** (12), **Nijmegen** (11), **Deventer** (9), **Alkmaar** (8), **Tilburg** (8) en vele kleinere.
 - Elke stad heeft een eigen adres, zoals `/amsterdam` of `/groningen`. Via de naam in de header kies je een andere stad.
 
 De kaart ververst automatisch. Per locatie zie je ook een trendanalyse: loopt de garage vol, en hoe druk is het normaal rond dit tijdstip? Er zijn geen accounts, geen advertenties en geen verzonnen cijfers. Alles komt uit open data.
