@@ -117,7 +117,7 @@ De app laat nooit onze eigen controletijd door voor de update-tijd van de bron. 
 | Veld | Betekenis |
 | --- | --- |
 | **Laatst gecontroleerd** | Wanneer onze server de stand voor het laatst met succes ophaalde |
-| **Update-tijd bron** | De tijd die de bron zelf meegeeft (alleen bij de RDW). Anders staat er "niet gepubliceerd door bron". |
+| **Update-tijd bron** | De tijd die de bron zelf meegeeft (bij de landelijke open parkeerdata). Anders staat er "niet gepubliceerd door bron". |
 | **Waarde ongewijzigd sinds** | Onze eigen waarneming van wanneer de waarde voor het laatst veranderde. Dit loopt via de historie ook over herstarts heen. "of eerder" betekent dat de waarde al zo was bij de eerste meting. |
 | **Bron** | Link naar de herkomst van het cijfer |
 
@@ -240,7 +240,7 @@ src/
 {
   "serverTime": "2026-10-10T14:44:42.000Z",
   "thresholds": { "low": 50 },
-  "sources":   [{ "id": "rdw", "name": "RDW open parkeerdata", "lastSuccessAt": "…", "error": null }],
+  "sources":   [{ "id": "rdw", "name": "Landelijke open parkeerdata", "lastSuccessAt": "…", "error": null }],
   "groups":    [{ "id": "groningen-bereikbaar:pr:Gemeente Groningen", "label": "P+R-terreinen (Groningen Bereikbaar)", "frozen": false }],
   "cities":    [{ "slug": "amsterdam", "name": "Amsterdam", "count": 34, "free": 5210, "lat": 52.36, "lng": 4.9 }],
   "locations": [{

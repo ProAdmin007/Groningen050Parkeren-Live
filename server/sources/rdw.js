@@ -152,8 +152,10 @@ let loaded = null;
 
 export default {
   id: 'rdw',
-  name: 'RDW open parkeerdata',
-  url: LIST,
+  // De bijsluiter bij deze open data (CC0) staat niet toe te vermelden dat de gegevens van de
+  // RDW afkomstig zijn, dus in de app heet deze bron neutraal en zonder link.
+  name: 'Landelijke open parkeerdata',
+  url: null,
   providesUpdateTime: true,
   ttlMs: CONFIG.rdwPollSeconds * 1000,
   initial: [],
@@ -199,7 +201,7 @@ export default {
           capacity,
           tariffs: [],
           openingHours: null,
-          url: f.dynamicDataUrl,
+          url: null,
           sourceUpdatedAt: new Date(updated).toISOString(),
         });
       } catch {

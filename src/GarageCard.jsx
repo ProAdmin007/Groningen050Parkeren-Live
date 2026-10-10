@@ -110,9 +110,13 @@ export default function GarageCard({ location: l, data, now, onClose }) {
           <div className="flex justify-between gap-3">
             <dt>Bron</dt>
             <dd className="text-right">
-              <a href={l.url || source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-slate-300 underline-offset-2 hover:text-slate-800">
-                {source.name}
-              </a>
+              {l.url || source.url ? (
+                <a href={l.url || source.url} target="_blank" rel="noopener noreferrer" className="underline decoration-slate-300 underline-offset-2 hover:text-slate-800">
+                  {source.name}
+                </a>
+              ) : (
+                source.name
+              )}
             </dd>
           </div>
         )}
