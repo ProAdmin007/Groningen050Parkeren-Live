@@ -4,12 +4,52 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#f8fafc" />
-    <meta name="description" content="Live vrije parkeerplaatsen in de gemeentelijke parkeergarages van Groningen op de kaart." />
+    <title>Parkeren Groningen: live vrije parkeerplaatsen op de kaart</title>
+    <meta
+      name="description"
+      content="Zie live hoeveel parkeerplaatsen er vrij zijn in de parkeergarages en op de P+R-terreinen van Groningen: Forum, Damsterdiep, Boterdiep, Q-Park, Kardinge, Haren en meer. Met trendanalyse per locatie."
+    />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <title>Parkeren Groningen</title>
+
+    <!-- Delen op sociale media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="nl_NL" />
+    <meta property="og:site_name" content="Parkeren Groningen" />
+    <meta property="og:title" content="Parkeren Groningen: live vrije parkeerplaatsen" />
+    <meta
+      property="og:description"
+      content="Vrije plaatsen in de parkeergarages en op de P+R-terreinen van Groningen, live op de kaart, met trendanalyse."
+    />
+    <meta property="og:image" content="https://raw.githubusercontent.com/ProAdmin007/Groningen050Parkeren-Live/main/docs/social-preview.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="640" />
+    <meta property="og:image:alt" content="Kaart van Groningen met het aantal vrije parkeerplaatsen per parkeergarage" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Parkeren Groningen",
+        "description": "Live kaart met vrije parkeerplaatsen in de parkeergarages en op de P+R-terreinen van Groningen, met trendanalyse per locatie.",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Any",
+        "inLanguage": "nl",
+        "isAccessibleForFree": true,
+        "areaServed": { "@type": "City", "name": "Groningen" },
+        "codeRepository": "https://github.com/ProAdmin007/Groningen050Parkeren-Live"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <h1>Parkeren Groningen</h1>
+      <p>
+        Live kaart met vrije parkeerplaatsen in de parkeergarages en op de P+R-terreinen van Groningen. Schakel JavaScript in om de
+        kaart te gebruiken.
+      </p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

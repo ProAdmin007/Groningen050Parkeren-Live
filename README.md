@@ -1,14 +1,27 @@
-# Parkeren Groningen
+# Parkeren Groningen: live vrije parkeerplaatsen op de kaart
 
 **Zie direct op de kaart waar je in Groningen nog kunt parkeren, en hoe actueel die informatie is.**
 
-Een lichte webapp met de actuele vrije plaatsen van de parkeergarages en P+R-terreinen in Groningen. Alles staat op één kaart en ververst automatisch. Er zijn geen accounts, geen advertenties en geen verzonnen cijfers.
+[![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A520-339933?logo=node.js&logoColor=white)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![Leaflet](https://img.shields.io/badge/Leaflet-OpenStreetMap-199900?logo=leaflet&logoColor=white)](https://leafletjs.com)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
+[![Open data](https://img.shields.io/badge/data-open%20data-0f172a)](#databronnen)
+
+Een lichte webapp die de **actuele parkeerbezetting in Groningen** toont: het aantal vrije plaatsen in de parkeergarages en op de P+R-terreinen, op één kaart.
+
+- **Parkeergarages:** Forum, Damsterdiep, Boterdiep, Circus, Euroborg, Station Europapark en de Q-Park-garages Westerhaven, Rademarkt, Ossenmarkt, Museum Centrum en Oosterpoort.
+- **P+R-terreinen:** Hoofdstation, Kardinge, Haren, Hoogkerk, Reitdiep en Meerstad.
+
+De kaart ververst automatisch. Per locatie zie je ook een trendanalyse: loopt de garage vol, en hoe druk is het normaal rond dit tijdstip? Er zijn geen accounts, geen advertenties en geen verzonnen cijfers. Alles komt uit open data.
 
 <p align="center">
-  <img src="docs/kaart-desktop.png" alt="Kaart van Groningen met parkeermarkers" width="72%">
+  <img src="docs/kaart-desktop.png" alt="Parkeren Groningen: kaart van de binnenstad met het aantal vrije parkeerplaatsen per parkeergarage" width="72%">
   &nbsp;
-  <img src="docs/infovenster-mobiel.png" alt="Informatievenster op een smartphone" width="22%">
+  <img src="docs/infovenster-mobiel.png" alt="Informatievenster van P+R Hoofdstation op een smartphone, met vrije plaatsen en bron-update-tijd" width="22%">
 </p>
+
+> **English:** Live map of available parking spaces in Groningen, the Netherlands. It covers municipal parking garages, Q-Park garages and park-and-ride (P+R) sites, with per-location trend analysis. Data comes from parkeren050.nl, RDW open parking data and Groningen Bereikbaar. The app is built with React, Leaflet/OpenStreetMap and a dependency-free Node.js backend, and is ready for Docker.
 
 ---
 
