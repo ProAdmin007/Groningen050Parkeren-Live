@@ -8,9 +8,9 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](#docker)
 [![Open data](https://img.shields.io/badge/data-open%20data-0f172a)](#databronnen)
 
-Een lichte webapp die de **actuele parkeerbezetting in Nederland** toont: het aantal vrije plaatsen in parkeergarages, op parkeerterreinen en op P+R-terreinen, op één kaart. De kaart toont **alleen locaties met een live bezetting**. Bij de laatste test waren dat ongeveer 236 locaties in 62 gemeenten, waaronder:
+Een lichte webapp die de **actuele parkeerbezetting in Nederland** toont: het aantal vrije plaatsen in parkeergarages, op parkeerterreinen en op P+R-terreinen, op één kaart. De kaart toont **alleen locaties met een live bezetting**. Bij de laatste test waren dat ongeveer 276 locaties in 63 gemeenten, waaronder:
 
-- **Amsterdam** (~34), **Almere** (~17), **Rotterdam** (~15), **Delft** (~13), **Groningen** (12), **Nijmegen** (~11), **Utrecht** (~10), **Tilburg** (7), **Den Haag** (5), **Arnhem** (4) en vele kleinere.
+- **Amsterdam** (~34), **Almere** (~17), **Rotterdam** (~30), **Delft** (~13), **Groningen** (12), **Nijmegen** (~11), **Utrecht** (~14), **Tilburg** (7), **Den Haag** (5), **Arnhem** (4) en vele kleinere.
 - Elke stad heeft een eigen adres, zoals `/amsterdam` of `/groningen`. Via de naam in de header kies je een andere stad.
 
 De kaart ververst automatisch. Per locatie zie je ook een trendanalyse: loopt de garage vol, en hoe druk is het normaal rond dit tijdstip? Er zijn geen accounts, geen advertenties en geen verzonnen cijfers. Alles komt uit open data.
@@ -84,8 +84,9 @@ Alle cijfers komen live uit openbare bronnen. Er is geen mock- of voorbeelddata.
 | Bron | Locaties | Update-tijd van de bron | Hoe actueel |
 | --- | --- | --- | --- |
 | [RDW open parkeerdata](https://npropendata.rdw.nl/parkingdata/v2/) | Alle openbare live-feeds in Nederland, ongeveer 225 locaties | ✓ | ✅ Live, met tijdstempel van de bron |
+| [Technolution](https://opendata.technolution.nl/opendata/parkingdata/v1) (parkeerverwijssystemen van gemeenten, CC BY 4.0) | Ruim 40 extra locaties, onder andere Jaarbeurs en Hoog Catharijne in Utrecht, P+R-terreinen in Rotterdam, Tilburg, Alkmaar, Deventer, Veenendaal en de Groningse P+R-terreinen | ✓ | ✅ Live, met tijdstempel; de Groningse P+R-terreinen bijvoorbeeld tot op de seconde |
 | [parkeren050.nl](https://www.parkeren050.nl/parkeren-groningen) | Groningen: gemeentelijke garages Forum, Damsterdiep, Boterdiep, Circus, Station Europapark | ✗ | ✅ Live, verandert van minuut tot minuut |
-| [Groningen Bereikbaar](https://kaart.groningenbereikbaar.nl) | Groningen: P+R-terreinen Haren 1 en 2, Reitdiep, Kardinge, Hoogkerk 1 en 2 | ✗ | 🟡 Ongeveer elke 16 minuten bijgewerkt |
+| [Groningen Bereikbaar](https://kaart.groningenbereikbaar.nl) | Groningen: P+R-terreinen, alleen als terugval (zie hieronder) | ✗ | 🟡 Ongeveer elke 16 minuten bijgewerkt |
 
 ### Hoe de data wordt opgehaald
 
@@ -96,7 +97,9 @@ Alle cijfers komen live uit openbare bronnen. Er is geen mock- of voorbeelddata.
   - **afgeschermde feeds** (HTTP 401, vrijwel allemaal Q-Park) worden 24 uur overgeslagen;
   - **dode feeds**, waarvan de bron al meer dan 24 uur niets heeft bijgewerkt, worden niet getoond.
 - **parkeren050.nl** heeft geen API. De bezetting staat server-side in de HTML (`<p class="available-spaces">158 plaatsen vrij</p>` of `VOL`). Een kleine scraper leest de overzichtspagina. Daar komen ook de namen, adressen, tarieven en openingstijden vandaan.
-- **Ontdubbelen:** staat dezelfde garage in twee bronnen (binnen 60 meter), dan telt de eerste bron. Forum in Groningen staat bijvoorbeeld ook in de RDW-data, maar komt van parkeren050.nl, omdat daar ook adres, tarief en openingstijden bij staan.
+- **Technolution** levert de parkeerverwijssystemen (de borden langs de weg) van veel gemeenten en publiceert die data in hetzelfde formaat (SPDP). Van de 181 feeds overlappen er veel met de landelijke data; ruim 40 locaties zijn nieuw. De data valt onder CC BY 4.0, daarom staat de bron met licentie in het informatievenster.
+- **Ontdubbelen:** dezelfde plek kan in meerdere bronnen staan. Een locatie geldt als dubbel bij hetzelfde bron-id, bij minder dan 60 meter afstand, of binnen 300 meter met een gedeeld naamwoord ("Boterdiep"); de dichtstbijzijnde kandidaat wint. De volgorde van voorrang is: parkeren050.nl (met adres, tarief en openingstijden), landelijke open parkeerdata, Technolution, Groningen Bereikbaar. Neemt een bron met voorrang een locatie over, dan houdt die haar id (dus ook haar historie) en haar stad.
+- **Gemeente:** PDOK bepaalt de gemeente op basis van de gemeentegrenzen. Terreinen op een grens, zoals P+R Hoogkerk 2 aan de A7, houden de stad van de stadsbron (Groningen).
 - **Groningen Bereikbaar** gebruikt een openbare GeoJSON-API (`/api/maps/1.json`) achter de "Slimme Kaart". Die geeft per locatie de capaciteit en het aantal beschikbare plekken, maar geen tijdstempel.
 
 ### Bevindingen over de actualiteit
@@ -177,7 +180,7 @@ Alle instellingen zijn omgevingsvariabelen van de server.
 | `POLL_SECONDS` | `60` | Hoe vaak de server zelf meet, voor de historie |
 | `HISTORY_DAYS` | `7` | Hoe lang de historie wordt bewaard |
 | `HISTORY_FILE` | `data/history.json` | Bestand voor de historie. Leeg laten betekent alleen in het geheugen. De RDW-cache komt in dezelfde map. |
-| `RDW_POLL_SECONDS` | `120` | Hoe vaak de landelijke RDW-feeds worden opgehaald |
+| `RDW_POLL_SECONDS` | `120` | Hoe vaak de landelijke feeds (landelijke open parkeerdata en Technolution) worden opgehaald |
 | `SOURCE_URL` | `https://www.parkeren050.nl/parkeren-groningen` | Bronpagina van parkeren050.nl |
 
 Twee instellingen gelden tijdens de build:
@@ -220,7 +223,9 @@ server/
   config.js                   instellingen en fetch met time-out
   sources/
     parkeren050.js            gemeentelijke garages (scraper)
-    rdw.js                    alle openbare live-feeds in Nederland (RDW + PDOK)
+    spdp.js                   gedeelde code voor SPDP-feeds: vaste gegevens, gemeente (PDOK), live stand
+    rdw.js                    landelijke open parkeerdata (SPDP)
+    technolution.js           parkeerverwijssystemen van gemeenten (SPDP, CC BY 4.0)
     groningenBereikbaar.js    P+R-terreinen
 src/
   App.jsx                     verversen, foutafhandeling, klokcorrectie

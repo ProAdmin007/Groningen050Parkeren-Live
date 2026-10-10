@@ -7,8 +7,14 @@ import * as history from './history.js';
 import parkeren050 from './sources/parkeren050.js';
 import rdw from './sources/rdw.js';
 import groningenBereikbaar from './sources/groningenBereikbaar.js';
+import technolution from './sources/technolution.js';
 
-const SOURCES = [parkeren050, rdw, groningenBereikbaar];
+// Volgorde = voorrang bij dubbele locaties. parkeren050 heeft adres, tarief en openingstijden;
+// Technolution is voor de Groningse P+R-terreinen veel actueler dan Groningen Bereikbaar.
+const SOURCES = [parkeren050, rdw, technolution, groningenBereikbaar];
+const priority = (sourceId) => SOURCES.findIndex((s) => s.id === sourceId);
+// Locaties die een bron met voorrang heeft overgenomen: "<bron>:<eigen id>" -> { id, city }.
+const adopted = new Map();
 
 // Laatst bekende stand per locatie; blijft behouden als een volgende poging mislukt.
 const locations = new Map();
@@ -43,15 +49,35 @@ function isReliable(l) {
   return !(g && isFrozen(g));
 }
 
-// Ligt er al een locatie van een andere bron binnen 60 m? Dan is het dezelfde plek.
+// Is dit dezelfde plek als een locatie uit een andere bron? Ja bij hetzelfde bron-id (uuid),
+// bij minder dan 60 m afstand, of binnen 300 m met een gedeeld naamwoord ("Boterdiep").
+const STOPWORDS = new Set(['garage', 'parkeergarage', 'parking', 'parkeren', 'terrein', 'parkeerterrein', 'station', 'centrum', 'kelder']);
+const nameTokens = (n) =>
+  new Set(
+    (n ?? '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/p\s*\+\s*r/g, ' ')
+      .split(/[^a-z]+/)
+      .filter((w) => w.length >= 4 && !STOPWORDS.has(w)),
+  );
 function duplicateOf(l, sourceId) {
   const kmPerDegLng = 111.32 * Math.cos((l.lat * Math.PI) / 180);
+  const mine = nameTokens(l.name);
+  let best = null;
+  let bestD = Infinity;
   for (const o of locations.values()) {
     if (o.source === sourceId) continue;
+    if (l.extId && o.extId === l.extId) return o;
     const d = Math.hypot((o.lat - l.lat) * 111.32, (o.lng - l.lng) * kmPerDegLng) * 1000;
-    if (d < 60) return o;
+    // De dichtstbijzijnde kandidaat wint (P+R Hoogkerk en Hoogkerk 2 liggen 200 m uit elkaar).
+    if ((d < 60 || (d < 300 && [...nameTokens(o.name)].some((t) => mine.has(t)))) && d < bestD) {
+      best = o;
+      bestD = d;
+    }
   }
-  return null;
+  return best;
 }
 
 async function refresh(source) {
@@ -63,9 +89,25 @@ async function refresh(source) {
     const changedGroups = new Set();
     const seenGroups = new Set();
     for (const l of fresh) {
-      const prev = locations.get(l.id);
-      if (prev?.source && prev.source !== source.id) continue; // eerste bron die een locatie levert, wint
-      if (!prev && duplicateOf(l, source.id)) continue; // zelfde garage uit een andere bron (bv. Forum via parkeren050 én RDW)
+      // Dezelfde plek kan in meerdere bronnen staan (bv. Forum via parkeren050, RDW én
+      // Technolution). De bron met voorrang wint; neemt die een locatie over, dan houdt de
+      // locatie haar id, zodat historie en trend doorlopen.
+      const key = `${source.id}:${l.id}`;
+      if (adopted.has(key)) l.id = adopted.get(key).id;
+      let prev = locations.get(l.id);
+      if (prev?.source && prev.source !== source.id && priority(prev.source) < priority(source.id)) continue;
+      if (!prev) {
+        const dup = duplicateOf(l, source.id);
+        if (dup && priority(dup.source) < priority(source.id)) continue;
+        if (dup) {
+          // Bij een overname de stad houden van de bron die de stad kent: Groningse
+          // P+R-terreinen liggen deels net over de gemeentegrens, maar horen bij Groningen.
+          adopted.set(key, { id: dup.id, city: dup.city });
+          l.id = dup.id;
+          prev = dup;
+        }
+      }
+      if (adopted.get(key)?.city) l.city = adopted.get(key).city;
       // Sinds wanneer zien wij deze waarde? Bij de eerste waarneming is dat "nu of eerder".
       const group = groupOf(source, l);
       seenGroups.add(group);
