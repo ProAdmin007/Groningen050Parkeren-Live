@@ -12,6 +12,7 @@ Een lichte webapp die de **actuele parkeerbezetting in Groningen** toont: het aa
 
 - **Parkeergarages:** Forum, Damsterdiep, Boterdiep, Circus, Euroborg, Station Europapark en de Q-Park-garages Westerhaven, Rademarkt, Ossenmarkt, Museum Centrum en Oosterpoort.
 - **P+R-terreinen:** Hoofdstation, Kardinge, Haren, Hoogkerk, Reitdiep en Meerstad.
+- **Alle andere openbare parkeergarages en parkeerterreinen** in de gemeente Groningen, zoals UMCG, Martini Ziekenhuis, MartiniPlaza, Sontplein, Zernike en Haren Station. Hiervan is geen live bezetting beschikbaar; de kaart toont de vaste gegevens.
 
 De kaart ververst automatisch. Per locatie zie je ook een trendanalyse: loopt de garage vol, en hoe druk is het normaal rond dit tijdstip? Er zijn geen accounts, geen advertenties en geen verzonnen cijfers. Alles komt uit open data.
 
@@ -36,11 +37,12 @@ Elke marker toont direct het aantal vrije plaatsen. Je hoeft er niet op te klikk
 | 🔴 **Rood** | Vol |
 | ⚪ **Grijs met –** | De bron geeft geen telling |
 | ⚪ **Grijs met 🕒** | Laatst bekende waarde, mogelijk niet actueel |
+| ◯ **Kleine witte P** | Parkeerlocatie zonder live bezetting. Alleen vaste gegevens: type, capaciteit, betaald of gratis, exploitant. |
 
 - Een marker met **P** is een parkeergarage, een marker met **P+R** een P+R-terrein.
 - Klik op een marker voor het informatievenster. Daarin staan het adres, de vrije plaatsen (met capaciteit als die bekend is), het tarief, de bron en de tijden. Er is ook een knop om te navigeren met Google Maps.
 - In het informatievenster staat ook een **trendanalyse** per locatie, zie [Trendanalyse](#trendanalyse).
-- De kaart opent op de binnenstad. Zoom uit om de P+R-terreinen aan de rand van de stad te zien.
+- De kaart opent op de binnenstad. Zoom uit om de P+R-terreinen aan de rand van de stad te zien. Parkeerterreinen zonder live data verschijnen pas vanaf zoomniveau 14, zodat de kaart rustig blijft.
 - De gegevens verversen **automatisch elke 60 seconden** zonder dat de pagina herlaadt, en direct wanneer je terugkeert naar het tabblad. Met de knop rechtsboven ververs je handmatig.
 - Alle tijden staan in de tijdzone Europe/Amsterdam.
 
@@ -100,7 +102,27 @@ Gemeten op 10 oktober 2026:
 
 - **P+R-terreinen (Groningen Bereikbaar):** de waarden veranderden om 12:30:50 en 12:46:55, dus ongeveer elke 16 minuten. Een getoonde waarde kan tot zo'n kwartier oud zijn.
 - **Q-Park-garages (Groningen Bereikbaar):** alle vijf de waarden bleven van 12:22 tot minstens 16:44 exact gelijk. Dat is meer dan vier uur, op een zaterdag in de binnenstad. Dezelfde bron meldde voor P+R Hoofdstation 146 van de 146 plaatsen vrij, terwijl de RDW tegelijkertijd 126 tot 128 vrij gaf. Deze cijfers zijn dus vrijwel zeker niet live. De app markeert ze automatisch als verouderd (zie hieronder).
-- **Niet opgenomen:** UMCG, Martini Ziekenhuis, MartiniPlaza, Holland Casino en andere locaties. Daarvoor is geen openbare live bezetting gevonden.
+- **Zonder live data:** UMCG, Martini Ziekenhuis, MartiniPlaza en andere locaties publiceren geen openbare bezetting. Ze staan wel op de kaart, via de catalogus hieronder.
+
+### Catalogus: alle openbare parkeerlocaties
+
+Naast de 19 locaties met live bezetting toont de kaart alle andere openbare parkeerlocaties in de gemeente Groningen. Bij de laatste update waren dat 68 extra locaties. De lijst wordt zo samengesteld:
+
+| Stap | Bron | Wat |
+| --- | --- | --- |
+| 1 | [OpenStreetMap](https://www.openstreetmap.org) via Overpass | Alle objecten `amenity=parking` binnen de gemeente Groningen, ongeveer 1400 stuks |
+| 2 | Filter | Weg vallen locaties die niet openbaar zijn (`private`, `customers`, `permit`) en parkeerstroken langs de weg. Over blijven garages, P+R-terreinen, terreinen die expliciet openbaar of betaald zijn, en terreinen met een naam. Naamloze vlakken kleiner dan 1500 m² met minder dan 50 plaatsen vallen ook af. |
+| 3 | [RDW-registraties](https://npropendata.rdw.nl/parkingdata/v2/) | Aanvulling met nog geldige registraties die niet in OSM staan, zoals Garage Centrum, Martini Ziekenhuis en MartiniPlaza. Bij deze locaties staat de registratiedatum. |
+| 4 | Ontdubbelen | Locaties op dezelfde plek of met dezelfde naam worden samengevoegd. Locaties die al live op de kaart staan, worden niet nog eens toegevoegd; hun ontbrekende capaciteit wordt wel aangevuld vanuit OSM. |
+| 5 | [PDOK Locatieserver](https://www.pdok.nl/introductie/-/article/pdok-locatieserver) | Dichtstbijzijnd adres, zodat naamloze terreinen een herkenbare naam krijgen ("Parkeerterrein Sontplein") |
+
+De server ververst de catalogus elke 24 uur en bewaart hem in `data/catalog.json`. Lukt verversen niet, bijvoorbeeld omdat Overpass overbelast is, dan blijft de vorige lijst staan. Bij de eerste start gebruikt de server de meegeleverde momentopname `server/catalog-snapshot.json`. Die ververs je met:
+
+```bash
+npm run update-catalog
+```
+
+Kaartgegevens © OpenStreetMap-bijdragers, beschikbaar onder de [ODbL](https://www.openstreetmap.org/copyright).
 
 ---
 
@@ -112,7 +134,7 @@ De app laat nooit onze eigen controletijd door voor de update-tijd van de bron. 
 | --- | --- |
 | **Laatst gecontroleerd** | Wanneer onze server de stand voor het laatst met succes ophaalde |
 | **Update-tijd bron** | De tijd die de bron zelf meegeeft (alleen bij de RDW). Anders staat er "niet gepubliceerd door bron". |
-| **Waarde ongewijzigd sinds** | Onze eigen waarneming van wanneer de waarde voor het laatst veranderde. "of eerder" betekent dat de waarde al zo was toen de server startte. |
+| **Waarde ongewijzigd sinds** | Onze eigen waarneming van wanneer de waarde voor het laatst veranderde. Dit loopt via de historie ook over herstarts heen. "of eerder" betekent dat de waarde al zo was bij de eerste meting. |
 | **Bron** | Link naar de herkomst van het cijfer |
 
 Een marker wordt **grijs met een klokje** zodra één van deze dingen geldt:
@@ -121,7 +143,7 @@ Een marker wordt **grijs met een klokje** zodra één van deze dingen geldt:
 2. de update-tijd van de bron is ouder dan 30 minuten (`SOURCE_STALE_AFTER_SECONDS`);
 3. **de bron staat stil:** in een groep locaties zonder update-tijd van de bron is al 30 minuten geen enkele waarde veranderd (`FROZEN_AFTER_SECONDS`).
 
-De stilstand-detectie werkt per groep, bijvoorbeeld "Q-Park-garages" en "P+R-terreinen". Binnen één bron kan het ene deel live zijn en het andere niet. Zo wordt Q-Park als verouderd gemarkeerd, terwijl de P+R-terreinen uit dezelfde bron gewoon in kleur blijven.
+De stilstand-detectie gebruikt de historie en werkt dus ook direct na een herstart. Ze werkt per groep, bijvoorbeeld "Q-Park-garages" en "P+R-terreinen". Binnen één bron kan het ene deel live zijn en het andere niet. Zo wordt Q-Park als verouderd gemarkeerd, terwijl de P+R-terreinen uit dezelfde bron gewoon in kleur blijven.
 
 Lukt het ophalen niet, dan blijft de laatst bekende waarde staan. De header en het informatievenster melden dan welke bron niet bereikbaar is.
 
@@ -210,6 +232,9 @@ server/
   index.js                    productieserver: API en statische bestanden
   parking.js                  combineert de bronnen: cache, versheid, stilstand-detectie, eigen metingen
   history.js                  historie (JSON-bestand) en trendanalyse
+  catalog.js                  catalogus van alle openbare parkeerlocaties (OSM, RDW, PDOK)
+  catalog-snapshot.json       meegeleverde momentopname van de catalogus
+  update-catalog.js           npm run update-catalog
   config.js                   instellingen en fetch met time-out
   sources/
     parkeren050.js            gemeentelijke garages (scraper)
@@ -266,4 +291,5 @@ src/
 - **Q-Park-cijfers:** die komen uit een bron die niet actueel lijkt (zie [Bevindingen over de actualiteit](#bevindingen-over-de-actualiteit)). De app markeert ze automatisch als verouderd. De echte live-feed van Q-Park is niet openbaar.
 - **Scraper:** als parkeren050.nl de opbouw van de pagina wijzigt, kan het uitlezen stoppen. De header meldt dan "parkeren050.nl niet bereikbaar" en het informatievenster noemt de oorzaak ("geen garages gevonden in de bron"). De laatst bekende waarden blijven staan en worden na 5 minuten als verouderd gemarkeerd.
 - **Kaarttegels:** de standaard OpenStreetMap-tegelserver is bedoeld voor licht gebruik. Gebruik bij veel bezoekers een eigen of commerciële tegelserver via `VITE_TILE_URL`.
+- **Catalogus:** de selectie van openbare parkeerterreinen hangt af van hoe goed ze in OpenStreetMap zijn ingevoerd. Een ontbrekende of foute locatie verbeter je het beste in OpenStreetMap zelf; na de volgende dagelijkse verversing staat hij goed op de kaart.
 - **Euroborg en P+R Meerstad:** de bronnen gaven tijdens het testen geen telling voor deze locaties, dus hun markers zijn grijs met "–".

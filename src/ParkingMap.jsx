@@ -10,13 +10,15 @@ const TILE_ATTRIBUTION =
 const CENTER = [53.2165, 6.5745];
 // Onder dit zoomniveau worden markers compacter, zodat ze minder overlappen.
 const COMPACT_BELOW = 14;
+// Onder dit zoomniveau worden parkeerterreinen zonder live data verborgen.
+const FAR_BELOW = 14;
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 function iconFor(loc, data, now, selected) {
   const level = levelOf(loc, data, now);
   const stale = loc.free != null && isStale(loc, data, now);
-  const classes = ['pg-marker', `pg-${level}`, loc.kind === 'pr' && 'pg-pr', stale && 'pg-stale', selected && 'pg-selected']
+  const classes = ['pg-marker', `pg-${level}`, `pg-kind-${loc.kind}`, loc.kind === 'pr' && 'pg-pr', stale && 'pg-stale', selected && 'pg-selected']
     .filter(Boolean)
     .join(' ');
   return L.divIcon({
@@ -29,6 +31,7 @@ function iconFor(loc, data, now, selected) {
 }
 
 function titleFor(loc, data, now) {
+  if (loc.live === false) return `${loc.name}: geen live bezetting${loc.capacity ? ` (${loc.capacity} plaatsen)` : ''}`;
   const value =
     loc.status === 'closed'
       ? 'gesloten'
@@ -54,7 +57,10 @@ export default function ParkingMap({ data, now, selectedId, onSelect }) {
     L.control.zoom({ position: 'bottomright' }).addTo(m);
     m.attributionControl.setPrefix(false);
     m.on('click', () => onSelectRef.current(null));
-    const setCompact = () => container.current?.classList.toggle('pg-compact', m.getZoom() < COMPACT_BELOW);
+    const setCompact = () => {
+      container.current?.classList.toggle('pg-compact', m.getZoom() < COMPACT_BELOW);
+      container.current?.classList.toggle('pg-far', m.getZoom() < FAR_BELOW);
+    };
     m.on('zoomend', setCompact);
     setCompact();
     map.current = m;
@@ -86,7 +92,7 @@ export default function ParkingMap({ data, now, selectedId, onSelect }) {
         marker.setIcon(icon);
       }
       // Garages boven P+R; geselecteerde marker altijd bovenop.
-      marker.setZIndexOffset(selected ? 2000 : loc.kind === 'pr' ? 0 : 500);
+      marker.setZIndexOffset(selected ? 2000 : loc.live === false ? -500 : loc.kind === 'pr' ? 0 : 500);
       const el = marker.getElement();
       if (el) {
         el.setAttribute('title', titleFor(loc, data, now));
@@ -103,7 +109,7 @@ export default function ParkingMap({ data, now, selectedId, onSelect }) {
     if (!fitted.current) {
       fitted.current = true;
       // Start op de binnenstad (de garages); P+R-terreinen aan de rand zie je door uit te zoomen.
-      const centre = data.locations.filter((l) => l.kind === 'garage');
+      const centre = data.locations.filter((l) => l.kind === 'garage' && l.live);
       const mobile = window.innerWidth < 640;
       m.fitBounds(L.latLngBounds((centre.length ? centre : data.locations).map((l) => [l.lat, l.lng])), {
         paddingTopLeft: mobile ? [24, 100] : [40, 110],

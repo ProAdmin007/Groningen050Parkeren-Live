@@ -24,8 +24,9 @@ export function isStale(loc, data, now) {
   return !!loc.sourceUpdatedAt && now - Date.parse(loc.sourceUpdatedAt) > data.sourceStaleAfterSeconds * 1000;
 }
 
-/** 'green' | 'orange' | 'red' | 'gray' */
+/** 'green' | 'orange' | 'red' | 'gray' | 'static' (locatie zonder live bezetting) */
 export function levelOf(loc, data, now) {
+  if (loc.live === false) return 'static';
   if (loc.status === 'unknown' || loc.status === 'closed' || loc.free == null || isStale(loc, data, now)) return 'gray';
   if (loc.free <= 0) return 'red';
   if (loc.free <= data.thresholds.low) return 'orange';
@@ -33,6 +34,7 @@ export function levelOf(loc, data, now) {
 }
 
 export function markerLabel(loc) {
+  if (loc.live === false) return '';
   if (loc.status === 'closed') return 'Dicht';
   if (loc.free == null) return '–';
   if (loc.free <= 0) return 'Vol';

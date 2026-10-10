@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "start": "node server/index.js"
+    "start": "node server/index.js",
+    "update-catalog": "node server/update-catalog.js"
   },
   "engines": {
     "node": ">=20"

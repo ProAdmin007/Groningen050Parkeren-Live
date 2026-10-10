@@ -3,6 +3,7 @@
 // iedere bezoeker apart de bronnen belast.
 import { CONFIG } from './config.js';
 import * as history from './history.js';
+import { catalogFor, loadCatalog, refreshCatalog } from './catalog.js';
 import parkeren050 from './sources/parkeren050.js';
 import rdw from './sources/rdw.js';
 import groningenBereikbaar from './sources/groningenBereikbaar.js';
@@ -57,7 +58,14 @@ async function refresh(source) {
       const group = groupOf(source, l);
       seenGroups.add(group);
       let since = { valueSince: prev?.valueSince ?? null, valueSinceIsUpperBound: prev?.valueSinceIsUpperBound ?? true };
-      if (!prev?.lastCheckedAt) since = { valueSince: checkedAt, valueSinceIsUpperBound: true };
+      if (!prev?.lastCheckedAt) {
+        // Eerste meting sinds de start: kijk in de historie hoe lang deze waarde er al staat.
+        const h = history.lastChange(l.id);
+        since =
+          h && h.value === l.free
+            ? { valueSince: new Date(h.since).toISOString(), valueSinceIsUpperBound: h.isFirst }
+            : { valueSince: checkedAt, valueSinceIsUpperBound: true };
+      }
       else if (prev.free !== l.free || prev.closed !== !!l.closed) {
         since = { valueSince: checkedAt, valueSinceIsUpperBound: false };
         changedGroups.add(group);
@@ -65,7 +73,14 @@ async function refresh(source) {
       locations.set(l.id, { ...blank, ...prev, ...l, ...since, source: source.id, group: group.id, lastCheckedAt: checkedAt });
       history.record(l.id, Date.parse(checkedAt), l.closed ? null : l.free);
     }
-    for (const g of seenGroups) if (changedGroups.has(g) || !g.lastChangeAt) g.lastChangeAt = checkedAt;
+    for (const g of seenGroups) {
+      if (changedGroups.has(g)) g.lastChangeAt = checkedAt;
+      else if (!g.lastChangeAt) {
+        // Na een herstart: laatste wijziging in deze groep volgens de historie.
+        const times = [...locations.values()].filter((l) => l.group === g.id && l.valueSince).map((l) => Date.parse(l.valueSince));
+        g.lastChangeAt = times.length ? new Date(Math.max(...times)).toISOString() : checkedAt;
+      }
+    }
     st.lastSuccessAt = checkedAt;
     st.error = null;
   } catch (err) {
@@ -118,11 +133,25 @@ export async function getParking() {
         frozen: isFrozen(g, counted),
       };
     }),
-    locations: [...locations.values()].map((l) => ({
-      ...l,
-      status: l.closed ? 'closed' : l.free == null ? 'unknown' : l.free > 0 ? 'available' : 'full',
-    })),
+    ...withCatalog(
+      [...locations.values()].map((l) => ({
+        ...l,
+        live: true,
+        status: l.closed ? 'closed' : l.free == null ? 'unknown' : l.free > 0 ? 'available' : 'full',
+      })),
+    ),
   };
+}
+
+// Live locaties aanvullen met de catalogus: ontbrekende capaciteit invullen en
+// alle overige openbare parkeerlocaties toevoegen (zonder live bezetting).
+function withCatalog(live) {
+  const { extra, enrich, fetchedAt } = catalogFor(live);
+  for (const l of live) {
+    const e = enrich.get(l.id);
+    if (e && l.capacity == null && e.capacity != null) Object.assign(l, { capacity: e.capacity, capacitySource: 'OpenStreetMap' });
+  }
+  return { catalogFetchedAt: fetchedAt, locations: [...live, ...extra] };
 }
 
 // De server meet zelf periodiek, zodat de historie doorloopt zonder bezoekers.
@@ -130,7 +159,9 @@ let started = false;
 export async function startBackground() {
   if (started) return;
   started = true;
-  await history.load();
+  await Promise.all([history.load(), loadCatalog()]);
+  refreshCatalog();
+  setInterval(() => refreshCatalog(), 3_600_000).unref(); // ververst zelf alleen als de lijst > 24 uur oud is
   const poll = () => getParking().catch((err) => console.warn(`[poll] ${err.message}`));
   poll();
   setInterval(poll, Math.max(CONFIG.pollSeconds * 1000, CONFIG.cacheTtlMs)).unref();

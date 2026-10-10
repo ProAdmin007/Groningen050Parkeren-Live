@@ -64,6 +64,18 @@ export async function save() {
   }
 }
 
+/**
+ * Uit de historie: sinds wanneer staat de laatst gemeten waarde er al?
+ * { value, since, isFirst } of null. isFirst = de waarde is sinds de eerste meting niet veranderd.
+ */
+export function lastChange(id) {
+  const s = series.get(id);
+  if (!s?.length) return null;
+  let i = s.length - 1;
+  while (i > 0 && s[i - 1][1] === s[i][1]) i--;
+  return { value: s.at(-1)[1], since: s[i][0], isFirst: i === 0 };
+}
+
 // Waarde op tijdstip t = laatste meting op of vóór t, mits niet in een gat.
 function valueAt(s, t) {
   let lo = 0;
