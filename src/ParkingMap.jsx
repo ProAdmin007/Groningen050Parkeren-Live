@@ -80,7 +80,10 @@ export default function ParkingMap({ data, now, selectedId, onSelect, citySlug, 
     const m = L.map(container.current, { zoomControl: false, center: CENTER, zoom: 8, zoomSnap: 0.25 });
     L.tileLayer(TILE_URL, { attribution: TILE_ATTRIBUTION, maxZoom: 19 }).addTo(m);
     L.control.zoom({ position: 'bottomright' }).addTo(m);
-    m.attributionControl.setPrefix(false);
+    // AGPL-3.0 (art. 13): gebruikers van de website moeten de broncode kunnen vinden.
+    m.attributionControl.setPrefix(
+      '<a href="https://github.com/ProAdmin007/Groningen050Parkeren-Live" target="_blank" rel="noopener noreferrer">Broncode (AGPL)</a>',
+    );
     m.on('click', () => onSelectRef.current(null));
     const locLayer = L.layerGroup();
     const cityLayer = L.layerGroup();

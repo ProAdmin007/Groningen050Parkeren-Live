@@ -281,3 +281,17 @@ src/
 - **Scraper:** als parkeren050.nl de opbouw van de pagina wijzigt, kan het uitlezen stoppen. De header meldt dan "parkeren050.nl niet bereikbaar" en het informatievenster noemt de oorzaak ("geen garages gevonden in de bron"). De laatst bekende waarden blijven staan en worden na 5 minuten als verouderd gemarkeerd.
 - **Kaarttegels:** de standaard OpenStreetMap-tegelserver is bedoeld voor licht gebruik. Gebruik bij veel bezoekers een eigen of commerciële tegelserver via `VITE_TILE_URL`.
 - **Euroborg en P+R Meerstad:** de bronnen gaven tijdens het testen geen telling, dus ze staan niet op de kaart. Ze verschijnen automatisch zodra de bron een telling geeft.
+
+---
+
+## Licentie
+
+Copyright (C) 2026 ProAdmin007
+
+De broncode valt onder de [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). Je mag de code gebruiken, aanpassen en verspreiden. Bied je een aangepaste versie aan als website of online dienst, dan moet je de broncode van die versie ook openbaar maken onder dezelfde licentie. Daarom staat er rechtsonder op de kaart een link "Broncode".
+
+De licentie geldt alleen voor de code, niet voor de parkeerdata. Daarvoor gelden de voorwaarden van de bronnen zelf:
+
+- **Landelijke open parkeerdata:** CC0. Volgens de bijsluiter mag bij hergebruik niet worden vermeld van welke overheidsdienst de data afkomstig is.
+- **Technolution (parkeerverwijssystemen van gemeenten):** CC BY 4.0, met naamsvermelding.
+- **Kaartgegevens:** © OpenStreetMap-bijdragers (ODbL).

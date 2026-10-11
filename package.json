@@ -21,5 +21,11 @@
     "@vitejs/plugin-react": "^6.1.2",
     "tailwindcss": "^4.3.3",
     "vite": "^8.3.4"
+  },
+  "license": "AGPL-3.0-only",
+  "author": "ProAdmin007",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ProAdmin007/Groningen050Parkeren-Live.git"
   }
 }
