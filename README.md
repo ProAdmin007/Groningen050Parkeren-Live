@@ -284,6 +284,25 @@ src/
 
 ---
 
+## SBOM (Software Bill of Materials)
+
+Het project heeft een SBOM in het formaat [CycloneDX](https://cyclonedx.org) 1.5, in de map [`sbom/`](sbom/):
+
+| Bestand | Inhoud |
+| --- | --- |
+| [`sbom/app.cdx.json`](sbom/app.cdx.json) | Wat wordt meegeleverd: de productiedependencies in de frontend-bundel (React, React DOM, Scheduler, Leaflet). De server zelf heeft geen dependencies. Deze SBOM zit ook in het Docker-image (`/app/sbom/app.cdx.json`). |
+| [`sbom/build.cdx.json`](sbom/build.cdx.json) | Inclusief de buildtools (Vite, Tailwind CSS en hun dependencies), voor supply-chain-analyse. Buildtools hebben de property `cdx:npm:package:development=true`. |
+
+Elke component heeft een [purl](https://github.com/package-url/purl-spec), een licentie, een integriteitshash en de dependency-relaties. Na het wijzigen van dependencies ververs je de SBOM met:
+
+```bash
+npm run sbom
+```
+
+Dit gebruikt de ingebouwde `npm sbom` (npm 10 of hoger), dus er is geen extra tool nodig. Controleren op bekende kwetsbaarheden kan bijvoorbeeld met [OSV-Scanner](https://google.github.io/osv-scanner/) of [Dependency-Track](https://dependencytrack.org); beide lezen CycloneDX in.
+
+---
+
 ## Licentie
 
 Copyright (C) 2026 ProAdmin007
