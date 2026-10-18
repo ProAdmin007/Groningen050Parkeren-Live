@@ -314,3 +314,13 @@ De licentie geldt alleen voor de code, niet voor de parkeerdata. Daarvoor gelden
 - **Landelijke open parkeerdata:** CC0. Volgens de bijsluiter mag bij hergebruik niet worden vermeld van welke overheidsdienst de data afkomstig is.
 - **Technolution (parkeerverwijssystemen van gemeenten):** CC BY 4.0, met naamsvermelding.
 - **Kaartgegevens:** © OpenStreetMap-bijdragers (ODbL).
+
+---
+
+<div align="center">
+
+## ☕ Support
+
+<a href="https://ko-fi.com/proadmin007" target="_blank"><img height="48" src="https://storage.ko-fi.com/cdn/kofi2.png?v=6" alt="Buy Me a Coffee at ko-fi.com" /></a>
+
+</div>
